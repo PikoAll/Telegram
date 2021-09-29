@@ -42,16 +42,16 @@ def controllo(message):
 def echo_message(message):
     
     if(controllo(message)==True):
-        global dataVecchia
         
+        global dataVecchia,fl
+        '''
         dataDiOggi=dataG=datetime.today().strftime('%Y-%m-%d').split("-")
-        print(dataVecchia, "  ",dataDiOggi)
+        #print(dataVecchia, "  ",dataDiOggi)
         if(int(dataVecchia[0])!=int(dataDiOggi[0]) and int(dataVecchia[1])!=int(dataDiOggi[1])):
-            print("ok")
+            #print("ok")
             dataVecchia=dataDiOggi
             verificaricordi(message)
-        else:
-            print("noo")
+        
         
         
         
@@ -61,17 +61,34 @@ def echo_message(message):
             ri+=1
             ricorda(message)
             
-            
-        elif (message.text==conto):
-            bot.send_message(message.chat.id,'Cosa devi fare ', reply_markup=bottoniDue())
+        '''  
+        if (message.text==conto):
+            #bot.send_message(message.chat.id,'Cosa devi fare ', reply_markup=bottoniDue())
+            fl=0
+            tipologiaConto(message)
             
             
         elif(message.text=="Chat"):
             listaMovimenti(message)
             
         elif(message.text=="Documento"):    ###############################################invio documento
+        
+            if(fl==1):
+                bot.send_document(message.chat.id, open(PATH+"Banca.csv","r") )
+            else:
+        
+                bot.send_document(message.chat.id, open(PATH+"file.csv","r") )
+            menuPrincipale(message)
             
-            bot.send_document(message.chat.id, open(PATH+"file.csv","r") )
+        elif(message.text=="Mio"):
+            fl=0
+            bot.send_message(message.chat.id,'Cosa devi fare ', reply_markup=bottoniDue())
+            menuPrincipale(message)
+            
+        elif(message.text=="Banca"):
+            #print("banca")
+            fl=1
+            bot.send_message(message.chat.id,'Cosa devi fare ', reply_markup=bottoniDue())
             menuPrincipale(message)
             
             
@@ -89,7 +106,7 @@ def echo_message(message):
         
         
         
-def menuPrincipale(message):
+def menuPrincipale(message):                                           ############################ aggiungere controllo
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
             #markup.add('Male', 'Female')
@@ -97,11 +114,12 @@ def menuPrincipale(message):
             markup.add(ricordami)
             bot.reply_to(message,"Ciao",reply_markup=markup) 
             
-  
             
   
-def verificaricordi(message):
-   
+            
+'''  
+def verificaricordi(message):                                        ############################ aggiungere controllo
+    print("okkkkkkkkkkkkkkkk")
     with open(PATH+"Ricordo.csv","r") as file:
         #scrivi=csv.reader(file) 
        
@@ -127,7 +145,7 @@ def ricorda(message):
     if(controllo(message)==True):
         global ri,ricordo,data
         if(ri==1):
-            bot.reply_to(message,"Cosa")
+            bot.reply_to(message,"Cosa per annullare /annulla")
         if (ri==2):
             ricordo=message.text
             print(message.text)
@@ -157,6 +175,9 @@ def ricorda(message):
             
     else:
         bot.reply_to(message,"accesso non autorizzato, non puoi comunicare con questo bot") 
+        
+        
+'''
 
 '''
 ################################################################################################
@@ -164,6 +185,19 @@ def ricorda(message):
 ###############################################################################################
 
 '''
+
+
+def tipologiaConto(message):
+    
+    if(controllo(message)==True):
+    
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup = types.ReplyKeyboardMarkup(one_time_keyboard=True)
+            markup.add('Banca', 'Mio')
+            bot.reply_to(message,"Quale conto",reply_markup=markup) 
+    else:
+        bot.reply_to(message,"accesso non autorizzato, non puoi comunicare con questo bot") 
+
         
 ###########################################################################################################################
 ####################################################### Bottoni a schermo  ################################################    
@@ -180,7 +214,7 @@ def bottoniDue():
 
 @bot.callback_query_handler(func=lambda call: True)   #####################################  callback
 def callback_query(call):
-     print('hola')
+     #print('hola')
     
      
      if call.data=='aggiungi':
@@ -206,7 +240,7 @@ def callback_query(call):
             bot.reply_to(call.message,"Scegli",reply_markup=markup)
             
      elif call.data=="statistica":
-         print("ciao amico okok")
+         #print("ciao amico okok")
          #statisticaFun(call)
          bot.reply_to(call.message,statisticaFun()+"\nTotale: "+str(totaleSoldi()))
          
@@ -262,37 +296,64 @@ def casuale(message):
 #scrivi nel csv
 def scriviCsv(soldi,casuale,data,segno):
     
-    with open(PATH+"file.csv","a") as file:
-       scrivi=csv.writer(file) 
-       if segno=="+":
-           scrivi.writerow([soldi,"£",casuale,data])
-       else:
-            scrivi.writerow([soldi*(-1),"£",casuale,data])
+    if(fl==1):
+        
+         with open(PATH+"Banca.csv","a") as file:
+           scrivi=csv.writer(file) 
+           if segno=="+":
+               scrivi.writerow([soldi,"£",casuale,data])
+           else:
+                scrivi.writerow([soldi*(-1),"£",casuale,data])
+    
+    else:
+    
+        with open(PATH+"file.csv","a") as file:
+           scrivi=csv.writer(file) 
+           if segno=="+":
+               scrivi.writerow([soldi,"£",casuale,data])
+           else:
+                scrivi.writerow([soldi*(-1),"£",casuale,data])
             
 
 #ritorna solo il totale dei soldi
 def totaleSoldi():
     tot=0
-    with open(PATH+"file.csv","r") as file:
-        #scrivi=csv.reader(file) 
-       
-        for line in file.readlines():
-            array = line.split(',')
-            first_item = array[0]
-            #print(first_item)
-            tot=tot+int(first_item)
+    
+    if(fl==1):
+        with open(PATH+"Banca.csv","r") as file:
+            #scrivi=csv.reader(file) 
+           
+            for line in file.readlines():
+                array = line.split(',')
+                first_item = array[0]
+                #print(first_item)
+                tot=tot+int(first_item)
+        
+    else:
+    
+        with open(PATH+"file.csv","r") as file:
+            #scrivi=csv.reader(file) 
+           
+            for line in file.readlines():
+                array = line.split(',')
+                first_item = array[0]
+                #print(first_item)
+                tot=tot+int(first_item)
     return tot
     
 
 def listaMovimenti(call):
     
      tot=[]
-     with open(PATH+"file.csv","r") as file:
+     
+     if(fl==1):
+         
+        with open(PATH+"Banca.csv","r") as file:
          
          for line in file.readlines():
             array = line.split(',')
             first_item = array
-            print(first_item)
+            #print(first_item)
             tot.append(first_item)
             
          ############################################à METTERE UN COMTROLLO SU TOT SE SI VOGLIONO LE ULTIME != MOVIMENTI
@@ -300,13 +361,36 @@ def listaMovimenti(call):
              tot=tot[-15:]
              
          stringa=""
-         print(len(tot))
+         #print(len(tot))
          for i in tot:
              stringa=stringa+str(i)+"\n"
              
-         print(stringa)
+         #print(stringa)
          bot.reply_to(call,stringa+"\nTotale: "+str(totaleSoldi()))
          menuPrincipale(call)
+         
+     else:
+     
+         with open(PATH+"file.csv","r") as file:
+             
+             for line in file.readlines():
+                array = line.split(',')
+                first_item = array
+                #print(first_item)
+                tot.append(first_item)
+                
+             ############################################à METTERE UN COMTROLLO SU TOT SE SI VOGLIONO LE ULTIME != MOVIMENTI
+             if(len(tot)>15):
+                 tot=tot[-15:]
+                 
+             stringa=""
+             #print(len(tot))
+             for i in tot:
+                 stringa=stringa+str(i)+"\n"
+                 
+             #print(stringa)
+             bot.reply_to(call,stringa+"\nTotale: "+str(totaleSoldi()))
+             menuPrincipale(call)
         
             
      
@@ -316,31 +400,60 @@ def statisticaFun():
     lista=[]
     stringa="Statistica:\n"
     num=0
-    with open(PATH+"file.csv","r") as file:
-         
-         for line in file.readlines():
-            array = line.split(',')
-            first_item = array
-            
-            
-            if(int(first_item[0])<0):
-                lista.append(first_item)
-    print("lista ee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ", lista)  
-         
-    i=0
-    while(i<len(lista)):
-             j=i+1
-             num=int(lista[i][0])
-             while(j<len(lista)):
-                 if (lista[i][2]==lista[j][2]):
-                     num+=int(lista[j][0])
-                     lista.pop(j)
-                 j+=1
-             stringa+=lista[i][2]+"  "+str(num)+"\n"    
-             i+=1
+    
+    
+    if(fl==1):
+    
+        with open(PATH+"Banca.csv","r") as file:
              
-    print(lista[i-1])
-    print(stringa)
+             for line in file.readlines():
+                array = line.split(',')
+                first_item = array
+                
+                
+                if(int(first_item[0])<0):
+                    lista.append(first_item)
+        #print("lista ee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ", lista)  
+             
+        i=0
+        while(i<len(lista)):
+                 j=i+1
+                 num=int(lista[i][0])
+                 while(j<len(lista)):
+                     if (lista[i][2]==lista[j][2]):
+                         num+=int(lista[j][0])
+                         lista.pop(j)
+                     j+=1
+                 stringa+=lista[i][2]+"  "+str(num)+"\n"    
+                 i+=1
+        
+    else:
+    
+        with open(PATH+"file.csv","r") as file:
+             
+             for line in file.readlines():
+                array = line.split(',')
+                first_item = array
+                
+                
+                if(int(first_item[0])<0):
+                    lista.append(first_item)
+        #print("lista ee eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee ", lista)  
+             
+        i=0
+        while(i<len(lista)):
+                 j=i+1
+                 num=int(lista[i][0])
+                 while(j<len(lista)):
+                     if (lista[i][2]==lista[j][2]):
+                         num+=int(lista[j][0])
+                         lista.pop(j)
+                     j+=1
+                 stringa+=lista[i][2]+"  "+str(num)+"\n"    
+                 i+=1
+                 
+    #print(lista[i-1])
+    #print(stringa)
     return stringa
                 
                 
@@ -375,3 +488,4 @@ def handle_docs_audio(message):
 
 
 bot.polling()  #obbligatorio per avviare il bot
+
